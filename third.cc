@@ -32,17 +32,6 @@
 #include "ns3/aodv-helper.h"
 #include "ns3/olsr-helper.h"
 
-// Default Network Topology
-//
-//   Wifi 10.1.3.0
-//                 AP
-//  *    *    *    *
-//  |    |    |    |    10.1.1.0
-// n5   n6   n7   n0 -------------- n1   n2   n3   n4
-//                   point-to-point  |    |    |    |
-//                                   ================
-//                                     LAN 10.1.2.0
-
 using namespace ns3;
 using namespace std;
 
@@ -53,17 +42,15 @@ main (int argc, char *argv[])
 {
   LogComponentEnable ("P3", LOG_LEVEL_ALL);
   NS_LOG_INFO ("Creating Topology");
-  std::string animFile = "dumbbell-animation.xml" ;  // Name of file for animation output
+  std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
-  uint32_t nCsma = 3;
-  uint32_t nWifi = 3;
+  uint32_t nWifi = 10;
   uint32_t  pktSize = 512;
   uint32_t	pktnumber = 50;
   uint32_t	numNodes = 20;
   double   	txpower = 1;//Units?
 
   CommandLine cmd;
-  cmd.AddValue ("nCsma", "Number of \"extra\" CSMA nodes/devices", nCsma);
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
   cmd.AddValue ("pktSize", "Set OnOff App Packet Size", pktSize);
@@ -85,8 +72,9 @@ main (int argc, char *argv[])
       LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
     }
 
-  
-
+  NodeContainer wifiStaNodes;
+  wifiStaNodes.Create (nWifi);
+  NodeContainer wifiApNode = wifiStaNodes.Get (0);
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
@@ -113,59 +101,41 @@ main (int argc, char *argv[])
 
   MobilityHelper mobility;
 
-  mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator");
+  mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
+                                 "X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"),
+                                 "Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
+
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (wifiStaNodes);
-  //Collision test
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (wifiApNode);
 
   InternetStackHelper stack;
-  //stack.Install (csmaNodes);
-  //stack.Install (wifiApNode);
   stack.Install (wifiStaNodes);
 
   Ipv4AddressHelper address;
 
   address.SetBase ("10.1.1.0", "255.255.255.0");
-  Ipv4InterfaceContainer p2pInterfaces;
-  p2pInterfaces = address.Assign (p2pDevices);
-
-  address.SetBase ("10.1.2.0", "255.255.255.0");
-  Ipv4InterfaceContainer csmaInterfaces;
-  csmaInterfaces = address.Assign (csmaDevices);
-
-  address.SetBase ("10.1.3.0", "255.255.255.0");
   address.Assign (staDevices);
   address.Assign (apDevices);
 
   UdpEchoServerHelper echoServer (9);
 
-  ApplicationContainer serverApps = echoServer.Install (csmaNodes.Get (nCsma));
-  serverApps.Start (Seconds (1.0));
-  serverApps.Stop (Seconds (10.0));
+  // UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma), 9);
+  // echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
+  // echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
+  // echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-  UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma), 9);
-  echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
-  echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-  echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
-
-  ApplicationContainer clientApps = 
-    echoClient.Install (wifiStaNodes.Get (nWifi - 1));
-  clientApps.Start (Seconds (2.0));
-  clientApps.Stop (Seconds (10.0));
+  // ApplicationContainer clientApps = 
+  //   echoClient.Install (wifiStaNodes.Get (nWifi - 1));
+  // clientApps.Start (Seconds (2.0));
+  // clientApps.Stop (Seconds (10.0));
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Stop (Seconds (10.0));
-  //Setting up netanim
-  //Set the bounding box for animation    
-  //node1.BoundingBox (1, 1, 100, 100);
-  //node2.BoundingBox (200, 150, 300, 250);
-  //node3.BoundingBox (350,300,500,400);
-  //node4.BoundingBox (500,450,650,550);
 
   // Create the animation object and configure for specified output
   AnimationInterface anim (animFile);
