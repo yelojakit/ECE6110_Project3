@@ -53,6 +53,7 @@ main (int argc, char *argv[])
   cmd.Parse (argc,argv);
 
   if (nWifi > 18)
+  
     {
       std::cout << "Number of wifi nodes " << nWifi << 
                    " specified exceeds the mobility bounding box" << std::endl;
