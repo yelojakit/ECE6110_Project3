@@ -15,13 +15,22 @@
  */
 
 #include "ns3/core-module.h"
-#include "ns3/point-to-point-module.h"
 #include "ns3/network-module.h"
+#include "ns3/internet-module.h"
 #include "ns3/applications-module.h"
+#include "ns3/packet-sink.h"
+#include "ns3/flow-monitor-module.h"
+#include "ns3/point-to-point-layout-module.h"
+#include "ns3/netanim-module.h"
+#include "ns3/random-variable.h"
+#include "ns3/udp-client-server-helper.h"
+#include "string.h"
 #include "ns3/wifi-module.h"
 #include "ns3/mobility-module.h"
 #include "ns3/csma-module.h"
 #include "ns3/internet-module.h"
+#include "ns3/aodv-helper.h"
+#include "ns3/olsr-helper.h"
 
 // Default Network Topology
 //
@@ -35,8 +44,9 @@
 //                                     LAN 10.1.2.0
 
 using namespace ns3;
+using namespace std;
 
-NS_LOG_COMPONENT_DEFINE ("ThirdScriptExample");
+NS_LOG_COMPONENT_DEFINE ("P3");
 
 int 
 main (int argc, char *argv[])
