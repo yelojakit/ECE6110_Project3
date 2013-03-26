@@ -51,15 +51,25 @@ NS_LOG_COMPONENT_DEFINE ("P3");
 int 
 main (int argc, char *argv[])
 {
+  LogComponentEnable ("P3", LOG_LEVEL_ALL);
+  NS_LOG_INFO ("Creating Topology");
+  std::string animFile = "dumbbell-animation.xml" ;  // Name of file for animation output
   bool verbose = true;
   uint32_t nCsma = 3;
   uint32_t nWifi = 3;
+  uint32_t  pktSize = 512;
+  uint32_t	pktnumber = 50;
+  uint32_t	numNodes = 20;
+  double   	txpower = 1;//Units?
 
   CommandLine cmd;
   cmd.AddValue ("nCsma", "Number of \"extra\" CSMA nodes/devices", nCsma);
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
-
+  cmd.AddValue ("pktSize", "Set OnOff App Packet Size", pktSize);
+  cmd.AddValue ("pktnumber","Number of Packets", pktnumber);
+  cmd.AddValue ("numNodes", "Number of nodes", numNodes);
+  cmd.AddValue ("txpower", "Transmitted Power", txpower);
   cmd.Parse (argc,argv);
 
   if (nWifi > 18)
@@ -75,31 +85,9 @@ main (int argc, char *argv[])
       LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
     }
 
-  NodeContainer p2pNodes;
-  p2pNodes.Create (2);
+  
 
-  PointToPointHelper pointToPoint;
-  pointToPoint.SetDeviceAttribute ("DataRate", StringValue ("5Mbps"));
-  pointToPoint.SetChannelAttribute ("Delay", StringValue ("2ms"));
-
-  NetDeviceContainer p2pDevices;
-  p2pDevices = pointToPoint.Install (p2pNodes);
-
-  NodeContainer csmaNodes;
-  csmaNodes.Add (p2pNodes.Get (1));
-  csmaNodes.Create (nCsma);
-
-  CsmaHelper csma;
-  csma.SetChannelAttribute ("DataRate", StringValue ("100Mbps"));
-  csma.SetChannelAttribute ("Delay", TimeValue (NanoSeconds (6560)));
-
-  NetDeviceContainer csmaDevices;
-  csmaDevices = csma.Install (csmaNodes);
-
-  NodeContainer wifiStaNodes;
-  wifiStaNodes.Create (nWifi);
-  NodeContainer wifiApNode = p2pNodes.Get (0);
-
+  
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
   phy.SetChannel (channel.Create ());
@@ -125,19 +113,24 @@ main (int argc, char *argv[])
 
   MobilityHelper mobility;
 
-  mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator");
-                                 // "X", DoubleValue (0.0),
-                                 // "Y", DoubleValue (0.0));
+  mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
+                                 "MinX", DoubleValue (0.0),
+                                 "MinY", DoubleValue (0.0),
+                                 "DeltaX", DoubleValue (5.0),
+                                 "DeltaY", DoubleValue (10.0),
+                                 "GridWidth", UintegerValue (3),
+                                 "LayoutType", StringValue ("RowFirst"));
 
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  mobility.SetMobilityModel ("ns3::RandomWalk2dMobilityModel",
+                             "Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
   mobility.Install (wifiStaNodes);
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (wifiApNode);
 
   InternetStackHelper stack;
-  stack.Install (csmaNodes);
-  stack.Install (wifiApNode);
+  //stack.Install (csmaNodes);
+  //stack.Install (wifiApNode);
   stack.Install (wifiStaNodes);
 
   Ipv4AddressHelper address;
@@ -171,12 +164,20 @@ main (int argc, char *argv[])
   clientApps.Stop (Seconds (10.0));
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
-
+  NS_LOG_INFO ("Run Simulation.");
   Simulator::Stop (Seconds (10.0));
+  //Setting up netanim
+  //Set the bounding box for animation    
+  //node1.BoundingBox (1, 1, 100, 100);
+  //node2.BoundingBox (200, 150, 300, 250);
+  //node3.BoundingBox (350,300,500,400);
+  //node4.BoundingBox (500,450,650,550);
 
-  pointToPoint.EnablePcapAll ("third");
-  phy.EnablePcap ("third", apDevices.Get (0));
-  csma.EnablePcap ("third", csmaDevices.Get (0), true);
+  // Create the animation object and configure for specified output
+  AnimationInterface anim (animFile);
+  
+ std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
+    NS_LOG_INFO ("Done.");
 
   Simulator::Run ();
   Simulator::Destroy ();
