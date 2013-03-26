@@ -48,7 +48,7 @@ main (int argc, char *argv[])
   uint32_t  pktSize = 512;
   uint32_t	pktnumber = 50;
   uint32_t	numNodes = 20;
-  double   	txPower = 1;
+  double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
 
   CommandLine cmd;
@@ -85,8 +85,8 @@ main (int argc, char *argv[])
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
-  phy.Set("TxPowerStart", DoubleValue(txPower));
-  phy.Set("TxPowerEnd", DoubleValue(txPower));  
+  phy.Set("TxPowerStart", DoubleValue(10.0*log10(txPower)));
+  phy.Set("TxPowerEnd", DoubleValue(10.0*log10(txPower)));  
   phy.SetChannel (channel.Create ());
 
   WifiHelper wifi = WifiHelper::Default ();
