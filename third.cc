@@ -85,6 +85,8 @@ main (int argc, char *argv[])
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
+  phy.Set("TxPowerStart", DoubleValue(txPower));
+  phy.Set("TxPowerEnd", DoubleValue(txPower));  
   phy.SetChannel (channel.Create ());
 
   WifiHelper wifi = WifiHelper::Default ();
