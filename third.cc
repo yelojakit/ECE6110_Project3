@@ -48,7 +48,8 @@ main (int argc, char *argv[])
   uint32_t  pktSize = 512;
   uint32_t	pktnumber = 50;
   uint32_t	numNodes = 20;
-  double   	txpower = 1;//Units?
+  double   	txPower = 1;
+  std::string   routing = "AODV";
 
   CommandLine cmd;
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
@@ -56,7 +57,8 @@ main (int argc, char *argv[])
   cmd.AddValue ("pktSize", "Set OnOff App Packet Size", pktSize);
   cmd.AddValue ("pktnumber","Number of Packets", pktnumber);
   cmd.AddValue ("numNodes", "Number of nodes", numNodes);
-  cmd.AddValue ("txpower", "Transmitted Power", txpower);
+  cmd.AddValue ("txPower", "Transmitted Power", txPower);
+  cmd.AddValue ("routing", "Routing Algorithm", routing);
   cmd.Parse (argc,argv);
 
   if (nWifi > 18)
@@ -70,6 +72,11 @@ main (int argc, char *argv[])
     {
       LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
       LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
+    }
+
+  if ((routing != "AODV") && (routing != "OLSR"))
+    {
+      NS_ABORT_MSG ("Invalid routing algorithm: Use --routing=AODV or --routing=OLSR");
     }
 
   NodeContainer wifiStaNodes;
@@ -113,6 +120,13 @@ main (int argc, char *argv[])
   mobility.Install (wifiApNode);
 
   InternetStackHelper stack;
+  if( routing == "AODV" ){
+    AodvHelper aodv;
+    stack.SetRoutingHelper(aodv);
+  } else {
+    OlsrHelper olsr;
+    stack.SetRoutingHelper(olsr);
+  } 
   stack.Install (wifiStaNodes);
 
   Ipv4AddressHelper address;
