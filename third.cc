@@ -44,10 +44,10 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Creating Topology");
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
-  uint32_t nWifi = 10;
-  uint32_t  pktSize = 512;
-  uint32_t	pktnumber = 50;
+  uint32_t      nWifi = 10;
+  uint32_t      pktSize = 512;
   uint32_t	numNodes = 20;
+  std::string appDataRate = "500kb/s";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
 
@@ -55,18 +55,11 @@ main (int argc, char *argv[])
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
   cmd.AddValue ("pktSize", "Set OnOff App Packet Size", pktSize);
-  cmd.AddValue ("pktnumber","Number of Packets", pktnumber);
+  cmd.AddValue ("appDataRate", "Set OnOff App DataRate", appDataRate);
   cmd.AddValue ("numNodes", "Number of nodes", numNodes);
   cmd.AddValue ("txPower", "Transmitted Power", txPower);
   cmd.AddValue ("routing", "Routing Algorithm", routing);
   cmd.Parse (argc,argv);
-
-  if (nWifi > 18)
-    {
-      std::cout << "Number of wifi nodes " << nWifi << 
-                   " specified exceeds the mobility bounding box" << std::endl;
-      exit (1);
-    }
 
   if (verbose)
     {
@@ -78,6 +71,11 @@ main (int argc, char *argv[])
     {
       NS_ABORT_MSG ("Invalid routing algorithm: Use --routing=AODV or --routing=OLSR");
     }
+
+  Config::SetDefault ("ns3::OnOffApplication::PacketSize", 
+                      UintegerValue (pktSize));
+  Config::SetDefault ("ns3::OnOffApplication::DataRate", 
+                      StringValue (appDataRate));
 
   NodeContainer wifiStaNodes;
   wifiStaNodes.Create (nWifi);
@@ -138,6 +136,20 @@ main (int argc, char *argv[])
   address.Assign (apDevices);
 
   UdpEchoServerHelper echoServer (9);
+
+  // Install On/Off apps
+  OnOffHelper UDPclientHelper ("ns3::UdpSocketFactory", Address ());
+  UDPclientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
+  UDPclientHelper.SetAttribute ("OffTime", UintegerValue(0) );
+  ApplicationContainer UDPclientApps;
+  // Create need to target arbitrary node
+  // Satya, this where I need you to fix. Prolly need a for loop for each node
+  // and need to randomly choose another node
+  AddressValue remoteAddress (InetSocketAddress (left.GetRightIpv4Address (i), port));
+  UDPclientHelper.SetAttribute ("Remote", remoteAddress);
+  UDPclientApps.Add (UDPclientHelper.Install (left.GetLeft (i)));
+  UDPclientApps.Start (Seconds (0.5)); // Start 1 second after sink
+  UDPclientApps.Stop (Seconds (15.0)); // Stop before the sink
 
   // UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma), 9);
   // echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
