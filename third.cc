@@ -31,6 +31,7 @@
 #include "ns3/internet-module.h"
 #include "ns3/aodv-helper.h"
 #include "ns3/olsr-helper.h"
+#include <stdlib.h>
 
 using namespace ns3;
 using namespace std;
@@ -48,6 +49,7 @@ main (int argc, char *argv[])
   uint32_t      pktSize = 512;
   uint32_t	numNodes = 20;
   uint32_t i;
+  uint32_t j;
   std::string appDataRate = "500kb/s";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
@@ -143,15 +145,20 @@ main (int argc, char *argv[])
   UDPclientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
   UDPclientHelper.SetAttribute ("OffTime", UintegerValue(0) );
   ApplicationContainer UDPclientApps;
+  uint16_t port = 4000;
   // Create need to target arbitrary node
+  //Still Working on it
+  /*
   for (i = 0; i < numNodes; i++)
   {
-    AddressValue remoteAddress (InetSocketAddress (left.GetRightIpv4Address (i), port));
+    AddressValue remoteAddress (InetSocketAddress (GetAddress (i), port));
     UDPclientHelper.SetAttribute ("Remote", remoteAddress);
-    UDPclientApps.Add (UDPclientHelper.Install (left.GetLeft (i)));
+    j = rand() % numNodes + 1;
+    UDPclientApps.Add (UDPclientHelper.Install (GetAddress (j)));
     UDPclientApps.Start (Seconds (0.5)); // Start 1 second after sink
     UDPclientApps.Stop (Seconds (15.0)); // Stop before the sink
   }
+  */
   // UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma), 9);
   // echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
   // echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
