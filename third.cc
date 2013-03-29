@@ -47,6 +47,7 @@ main (int argc, char *argv[])
   uint32_t      nWifi = 10;
   uint32_t      pktSize = 512;
   uint32_t	numNodes = 20;
+  uint32_t i;
   std::string appDataRate = "500kb/s";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
@@ -143,14 +144,14 @@ main (int argc, char *argv[])
   UDPclientHelper.SetAttribute ("OffTime", UintegerValue(0) );
   ApplicationContainer UDPclientApps;
   // Create need to target arbitrary node
-  // Satya, this where I need you to fix. Prolly need a for loop for each node
-  // and need to randomly choose another node
-  AddressValue remoteAddress (InetSocketAddress (left.GetRightIpv4Address (i), port));
-  UDPclientHelper.SetAttribute ("Remote", remoteAddress);
-  UDPclientApps.Add (UDPclientHelper.Install (left.GetLeft (i)));
-  UDPclientApps.Start (Seconds (0.5)); // Start 1 second after sink
-  UDPclientApps.Stop (Seconds (15.0)); // Stop before the sink
-
+  for (i = 0; i < numNodes; i++)
+  {
+    AddressValue remoteAddress (InetSocketAddress (left.GetRightIpv4Address (i), port));
+    UDPclientHelper.SetAttribute ("Remote", remoteAddress);
+    UDPclientApps.Add (UDPclientHelper.Install (left.GetLeft (i)));
+    UDPclientApps.Start (Seconds (0.5)); // Start 1 second after sink
+    UDPclientApps.Stop (Seconds (15.0)); // Stop before the sink
+  }
   // UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma), 9);
   // echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
   // echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
