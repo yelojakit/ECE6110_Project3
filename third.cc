@@ -48,8 +48,8 @@ main (int argc, char *argv[])
   uint32_t      nWifi = 10;
   uint32_t      pktSize = 512;
   uint32_t	numNodes = 20;
-  uint32_t i;
-  uint32_t j;
+  //uint32_t i;
+  //uint32_t j;
   std::string appDataRate = "500kb/s";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
@@ -143,9 +143,9 @@ main (int argc, char *argv[])
   // Install On/Off apps
   OnOffHelper UDPclientHelper ("ns3::UdpSocketFactory", Address ());
   UDPclientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
-  UDPclientHelper.SetAttribute ("OffTime", UintegerValue(0) );
+  UDPclientHelper.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
   ApplicationContainer UDPclientApps;
-  uint16_t port = 4000;
+  //uint16_t port = 4000;
   // Create need to target arbitrary node
   //Still Working on it
   /*
