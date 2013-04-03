@@ -73,8 +73,8 @@ main (int argc, char *argv[])
   Config::SetDefault ("ns3::OnOffApplication::DataRate", 
                       StringValue (appDataRate));
 
-  NodeContainer wifiStaNodes;
-  wifiStaNodes.Create (nWifi);
+  NodeContainer wifiAdhocNodes;
+  wifiAdhocNodes.Create (nWifi);
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
@@ -89,7 +89,7 @@ main (int argc, char *argv[])
   NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default ();
   
   NetDeviceContainer staDevices;
-  staDevices = wifi.Install (phy, wifiMac, wifiStaNodes);
+  staDevices = wifi.Install (phy, wifiMac, wifiAdhocNodes);
 
   MobilityHelper mobility;
 
@@ -99,7 +99,7 @@ main (int argc, char *argv[])
 
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobility.Install (wifiStaNodes);
+  mobility.Install (wifiAdhocNodes);
 
   InternetStackHelper stack;
   if( routing == "AODV" ){
@@ -109,7 +109,7 @@ main (int argc, char *argv[])
     OlsrHelper olsr;
     stack.SetRoutingHelper(olsr);
   } 
-  stack.Install (wifiStaNodes);
+  stack.Install (wifiAdhocNodes);
 
   Ipv4AddressHelper address;
   address.SetBase ("10.1.1.0", "255.255.255.0");
@@ -124,11 +124,11 @@ main (int argc, char *argv[])
   UDPclientHelper.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=0.]"));
   ApplicationContainer UDPclientApps;
   vector<uint32_t> bit2;
+  vector<uint32_t> destinations;
   for(uint32_t i = 0; i < nWifi ; ++i ){
     bit2.push_back(i);
   }
   random_shuffle( bit2.begin() , bit2.end() );
-  // char bit[1000] = {1};
   uint16_t port = 9;
   for (uint32_t i = 0; i < nWifi ; ++i)
     {
@@ -141,7 +141,8 @@ main (int argc, char *argv[])
       NS_LOG_INFO (msg);
       AddressValue remoteAddress (InetSocketAddress (adhocInterfaces.GetAddress (bit2[0]), port));
       UDPclientHelper.SetAttribute ("Remote", remoteAddress);
-      UDPclientApps.Add (UDPclientHelper.Install (wifiStaNodes.Get (i)));
+      UDPclientApps.Add (UDPclientHelper.Install (wifiAdhocNodes.Get (i)));
+      destinations.push_back(bit2[0]);
       bit2.erase(bit2.begin());
     }
   UDPclientApps.Start (Seconds (2.0));
@@ -153,7 +154,7 @@ main (int argc, char *argv[])
   ApplicationContainer sinkUDPApps; 
   for (uint32_t i = 0; i < nWifi ; ++i)
     {
-      sinkUDPApps.Add (packetSinkUDPHelper.Install (wifiStaNodes.Get (i)));
+      sinkUDPApps.Add (packetSinkUDPHelper.Install (wifiAdhocNodes.Get (i)));
     }
   sinkUDPApps.Start (Seconds (0.0));
   sinkUDPApps.Stop (Seconds (10.0));
@@ -171,20 +172,17 @@ main (int argc, char *argv[])
   monitor->SerializeToXmlFile("xmlfile.xml",false,false);
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
   std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
+  uint32_t totalRx = 0;
+  uint32_t totalTx = 0;
   for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
       Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(i->first);
-      if ((t.destinationAddress == "10.2.1.1"))
-        {
-          double start = i->second.timeFirstTxPacket.GetSeconds();
-          minStartTime = start < minStartTime ? start:minStartTime;
-          double last = i->second.timeLastRxPacket.GetSeconds();
-          maxEndTime = last > maxEndTime ? last:maxEndTime;
-          std::cout << "Flow " << i->first << ": " << last << "-" << 
-            start << " = " << last-start << "\t" << i->second.rxBytes << 
-            std::endl;
-          
-        }
+      for( size_t i = 0 ; i < nWifi ; ++i ){
+        if ((t.sourceAddress == adhocInterfaces.GetAddress(i)) && (t.destinationAddress == adhocInterfaces.GetAddress(destinations[i])))
+          //   i+1;
+          // increment TX
+          // increment RX
+      }
     }
   
  std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
