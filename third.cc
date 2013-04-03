@@ -32,6 +32,7 @@
 #include "ns3/aodv-helper.h"
 #include "ns3/olsr-helper.h"
 #include <stdlib.h>
+#include <algorithm>
 
 using namespace ns3;
 using namespace std;
@@ -45,19 +46,15 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Creating Topology");
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
-  uint32_t      nWifi = 10;
-  uint32_t	numNodes = 20;
-  //uint32_t i;
-  //uint32_t j;
+  uint32_t      nWifi = 50;
   std::string appDataRate = "1024kb/s";
-  double   	txPower = 1; //In terms of mW
+  double   	txPower = 500; //In terms of mW
   std::string   routing = "AODV";
 
   CommandLine cmd;
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
   cmd.AddValue ("appDataRate", "Set OnOff App DataRate", appDataRate);
-  cmd.AddValue ("numNodes", "Number of nodes", numNodes);
   cmd.AddValue ("txPower", "Transmitted Power", txPower);
   cmd.AddValue ("routing", "Routing Algorithm", routing);
   cmd.Parse (argc,argv);
@@ -78,7 +75,6 @@ main (int argc, char *argv[])
 
   NodeContainer wifiStaNodes;
   wifiStaNodes.Create (nWifi);
-  NodeContainer wifiApNode = wifiStaNodes.Get (0);
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
@@ -90,21 +86,10 @@ main (int argc, char *argv[])
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", 
                                 "DataMode", StringValue ("OfdmRate6Mbps")); 
 
-  NqosWifiMacHelper mac = NqosWifiMacHelper::Default ();
-
-  Ssid ssid = Ssid ("ns-3-ssid");
-  mac.SetType ("ns3::StaWifiMac",
-               "Ssid", SsidValue (ssid),
-               "ActiveProbing", BooleanValue (false));
-
+  NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default ();
+  
   NetDeviceContainer staDevices;
-  staDevices = wifi.Install (phy, mac, wifiStaNodes);
-
-  mac.SetType ("ns3::ApWifiMac",
-               "Ssid", SsidValue (ssid));
-
-  NetDeviceContainer apDevices;
-  apDevices = wifi.Install (phy, mac, wifiApNode);
+  staDevices = wifi.Install (phy, wifiMac, wifiStaNodes);
 
   MobilityHelper mobility;
 
@@ -127,48 +112,51 @@ main (int argc, char *argv[])
   stack.Install (wifiStaNodes);
 
   Ipv4AddressHelper address;
-
   address.SetBase ("10.1.1.0", "255.255.255.0");
-  address.Assign (staDevices);
 
-  UdpEchoServerHelper echoServer (9);
+  Ipv4InterfaceContainer adhocInterfaces;
+  adhocInterfaces =   address.Assign (staDevices);
 
+  NS_LOG_INFO ("Creating On/Off apps");
   // Install On/Off apps
   OnOffHelper UDPclientHelper ("ns3::UdpSocketFactory", Address ());
   UDPclientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
-  UDPclientHelper.SetAttribute ("OffTime", StringValue ("0"));
+  UDPclientHelper.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=0.]"));
   ApplicationContainer UDPclientApps;
-  char bit[1000] = {1};
-  // uint16_t port = 4000;
+  vector<uint32_t> bit2;
+  for(uint32_t i = 0; i < nWifi ; ++i ){
+    bit2.push_back(i);
+  }
+  random_shuffle( bit2.begin() , bit2.end() );
+  // char bit[1000] = {1};
+  uint16_t port = 9;
   for (uint32_t i = 0; i < nWifi ; ++i)
     {
-      uint32_t send;
-      // Create an on/off app sending packets to the left side
-      while( true ){
-        uint32_t temp = rand() % nWifi + 1;
-        if( bit[temp] ){
-          send = temp;
-          bit[temp] = 0;
-          break;
-        }
-      }     
-      AddressValue remoteAddress (staDevices.Get(send)->GetAddress());
+      while( bit2[0] == i ){
+        bit2.push_back(i);
+        bit2.erase(bit2.begin());
+      }
+      char msg[50] = "";
+      sprintf( msg , "%u sends to %u" , i , bit2[0] );
+      NS_LOG_INFO (msg);
+      AddressValue remoteAddress (InetSocketAddress (adhocInterfaces.GetAddress (bit2[0]), port));
       UDPclientHelper.SetAttribute ("Remote", remoteAddress);
-      UDPclientApps.Add (UDPclientHelper.Install (*(staDevices.Get (i))));
+      UDPclientApps.Add (UDPclientHelper.Install (wifiStaNodes.Get (i)));
+      bit2.erase(bit2.begin());
     }
   UDPclientApps.Start (Seconds (2.0));
   UDPclientApps.Stop (Seconds (10.0));
 
-  uint16_t port = 9;
+  NS_LOG_INFO ("Creating UDP sink apps");
   Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
   PacketSinkHelper packetSinkUDPHelper ("ns3::UdpSocketFactory", sinkLocalAddress);
   ApplicationContainer sinkUDPApps; 
   for (uint32_t i = 0; i < nWifi ; ++i)
     {
-      sinkUDPApps.Add (packetSinkUDPHelper.Install (staDevices.Get (i)));
+      sinkUDPApps.Add (packetSinkUDPHelper.Install (wifiStaNodes.Get (i)));
     }
   sinkUDPApps.Start (Seconds (0.0));
-  sinkUDPApps.Stop (Seconds (20.0));
+  sinkUDPApps.Stop (Seconds (10.0));
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Run Simulation.");
@@ -176,6 +164,28 @@ main (int argc, char *argv[])
 
   // Create the animation object and configure for specified output
   AnimationInterface anim (animFile);
+  // Install FlowMonitor on all nodes
+  FlowMonitorHelper flowmon;
+  Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
+
+  monitor->SerializeToXmlFile("xmlfile.xml",false,false);
+  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
+  std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
+  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
+    {
+      Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(i->first);
+      if ((t.destinationAddress == "10.2.1.1"))
+        {
+          double start = i->second.timeFirstTxPacket.GetSeconds();
+          minStartTime = start < minStartTime ? start:minStartTime;
+          double last = i->second.timeLastRxPacket.GetSeconds();
+          maxEndTime = last > maxEndTime ? last:maxEndTime;
+          std::cout << "Flow " << i->first << ": " << last << "-" << 
+            start << " = " << last-start << "\t" << i->second.rxBytes << 
+            std::endl;
+          
+        }
+    }
   
  std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
     NS_LOG_INFO ("Done.");
