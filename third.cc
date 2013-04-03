@@ -46,7 +46,7 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Creating Topology");
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
-  uint32_t      nWifi = 50;
+  uint32_t      nWifi = 3;
   std::string appDataRate = "1024kb/s";
   double   	txPower = 500; //In terms of mW
   std::string   routing = "AODV";
@@ -137,7 +137,7 @@ main (int argc, char *argv[])
         bit2.erase(bit2.begin());
       }
       char msg[50] = "";
-      sprintf( msg , "%u sends to %u" , i , bit2[0] );
+      sprintf( msg , "%u: sends to %u" , i , bit2[0] );
       NS_LOG_INFO (msg);
       AddressValue remoteAddress (InetSocketAddress (adhocInterfaces.GetAddress (bit2[0]), port));
       UDPclientHelper.SetAttribute ("Remote", remoteAddress);
@@ -169,6 +169,10 @@ main (int argc, char *argv[])
   FlowMonitorHelper flowmon;
   Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
 
+  for( size_t i = 0 ; i < nWifi ; ++i ){
+    cout << destinations[i] << endl;
+  }
+
   monitor->SerializeToXmlFile("xmlfile.xml",false,false);
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
   std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
@@ -177,13 +181,17 @@ main (int argc, char *argv[])
   for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
       Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(i->first);
-      for( size_t i = 0 ; i < nWifi ; ++i ){
-        if ((t.sourceAddress == adhocInterfaces.GetAddress(i)) && (t.destinationAddress == adhocInterfaces.GetAddress(destinations[i])))
-          //   i+1;
-          // increment TX
-          // increment RX
+      for( size_t j = 0 ; j < nWifi ; ++j ){
+        if ((t.sourceAddress == adhocInterfaces.GetAddress(j)) && (t.destinationAddress == adhocInterfaces.GetAddress(destinations[j]))){
+          totalTx += i->second.txBytes;
+          totalRx += i->second.rxBytes;
+          cout << "in here" << endl;
+        }
       }
     }
+  
+  cout << totalTx << "\t" << totalRx << endl;
+  cout << "Efficiency = " << totalRx/totalTx << endl;
   
  std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
     NS_LOG_INFO ("Done.");
