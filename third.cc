@@ -49,7 +49,7 @@ main (int argc, char *argv[])
   uint32_t	numNodes = 20;
   //uint32_t i;
   //uint32_t j;
-  std::string appDataRate = "1mbps";
+  std::string appDataRate = "1024kb/s";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
 
@@ -88,7 +88,7 @@ main (int argc, char *argv[])
 
   WifiHelper wifi = WifiHelper::Default ();
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", 
-                                "DataMode", StringValue ("wifia-11mbs")); 
+                                "DataMode", StringValue ("OfdmRate6Mbps")); 
 
   NqosWifiMacHelper mac = NqosWifiMacHelper::Default ();
 
@@ -116,9 +116,6 @@ main (int argc, char *argv[])
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
   mobility.Install (wifiStaNodes);
 
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  mobility.Install (wifiApNode);
-
   InternetStackHelper stack;
   if( routing == "AODV" ){
     AodvHelper aodv;
@@ -133,38 +130,45 @@ main (int argc, char *argv[])
 
   address.SetBase ("10.1.1.0", "255.255.255.0");
   address.Assign (staDevices);
-  address.Assign (apDevices);
 
   UdpEchoServerHelper echoServer (9);
 
   // Install On/Off apps
   OnOffHelper UDPclientHelper ("ns3::UdpSocketFactory", Address ());
   UDPclientHelper.SetAttribute ("OnTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
-  UDPclientHelper.SetAttribute ("OffTime", StringValue ("ns3::UniformRandomVariable[Min=0.,Max=1.]"));
+  UDPclientHelper.SetAttribute ("OffTime", StringValue ("0"));
   ApplicationContainer UDPclientApps;
-  //uint16_t port = 4000;
-  // Create need to target arbitrary node
-  //Still Working on it
-  /*
-  for (i = 0; i < numNodes; i++)
-  {
-    AddressValue remoteAddress (InetSocketAddress (GetAddress (i), port));
-    UDPclientHelper.SetAttribute ("Remote", remoteAddress);
-    j = rand() % numNodes + 1;
-    UDPclientApps.Add (UDPclientHelper.Install (GetAddress (j)));
-    UDPclientApps.Start (Seconds (0.5)); // Start 1 second after sink
-    UDPclientApps.Stop (Seconds (15.0)); // Stop before the sink
-  }
-  */
-  // UdpEchoClientHelper echoClient (csmaInterfaces.GetAddress (nCsma), 9);
-  // echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
-  // echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-  // echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+  char bit[1000] = {1};
+  // uint16_t port = 4000;
+  for (uint32_t i = 0; i < nWifi ; ++i)
+    {
+      uint32_t send;
+      // Create an on/off app sending packets to the left side
+      while( true ){
+        uint32_t temp = rand() % nWifi + 1;
+        if( bit[temp] ){
+          send = temp;
+          bit[temp] = 0;
+          break;
+        }
+      }     
+      AddressValue remoteAddress (staDevices.Get(send)->GetAddress());
+      UDPclientHelper.SetAttribute ("Remote", remoteAddress);
+      UDPclientApps.Add (UDPclientHelper.Install (*(staDevices.Get (i))));
+    }
+  UDPclientApps.Start (Seconds (2.0));
+  UDPclientApps.Stop (Seconds (10.0));
 
-  // ApplicationContainer clientApps = 
-  //   echoClient.Install (wifiStaNodes.Get (nWifi - 1));
-  // clientApps.Start (Seconds (2.0));
-  // clientApps.Stop (Seconds (10.0));
+  uint16_t port = 9;
+  Address sinkLocalAddress (InetSocketAddress (Ipv4Address::GetAny (), port));
+  PacketSinkHelper packetSinkUDPHelper ("ns3::UdpSocketFactory", sinkLocalAddress);
+  ApplicationContainer sinkUDPApps; 
+  for (uint32_t i = 0; i < nWifi ; ++i)
+    {
+      sinkUDPApps.Add (packetSinkUDPHelper.Install (staDevices.Get (i)));
+    }
+  sinkUDPApps.Start (Seconds (0.0));
+  sinkUDPApps.Stop (Seconds (20.0));
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Run Simulation.");
