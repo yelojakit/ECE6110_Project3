@@ -46,17 +46,17 @@ main (int argc, char *argv[])
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
   uint32_t      nWifi = 10;
-  uint32_t      pktSize = 512;
   uint32_t	numNodes = 20;
   //uint32_t i;
   //uint32_t j;
+  std::string appDataRate = "1mbps";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
 
   CommandLine cmd;
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
-  cmd.AddValue ("pktSize", "Set OnOff App Packet Size", pktSize);
+  cmd.AddValue ("appDataRate", "Set OnOff App DataRate", appDataRate);
   cmd.AddValue ("numNodes", "Number of nodes", numNodes);
   cmd.AddValue ("txPower", "Transmitted Power", txPower);
   cmd.AddValue ("routing", "Routing Algorithm", routing);
@@ -73,8 +73,8 @@ main (int argc, char *argv[])
       NS_ABORT_MSG ("Invalid routing algorithm: Use --routing=AODV or --routing=OLSR");
     }
 
-  Config::SetDefault ("ns3::OnOffApplication::PacketSize", 
-                      UintegerValue (pktSize));
+  Config::SetDefault ("ns3::OnOffApplication::DataRate", 
+                      StringValue (appDataRate));
 
   NodeContainer wifiStaNodes;
   wifiStaNodes.Create (nWifi);
@@ -87,7 +87,8 @@ main (int argc, char *argv[])
   phy.SetChannel (channel.Create ());
 
   WifiHelper wifi = WifiHelper::Default ();
-  wifi.SetRemoteStationManager ("ns3::AarfWifiManager");
+  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", 
+                                "DataMode", StringValue ("wifia-11mbs")); 
 
   NqosWifiMacHelper mac = NqosWifiMacHelper::Default ();
 
