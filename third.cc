@@ -50,7 +50,6 @@ main (int argc, char *argv[])
   uint32_t	numNodes = 20;
   //uint32_t i;
   //uint32_t j;
-  std::string appDataRate = "500kb/s";
   double   	txPower = 1; //In terms of mW
   std::string   routing = "AODV";
 
@@ -58,7 +57,6 @@ main (int argc, char *argv[])
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
   cmd.AddValue ("pktSize", "Set OnOff App Packet Size", pktSize);
-  cmd.AddValue ("appDataRate", "Set OnOff App DataRate", appDataRate);
   cmd.AddValue ("numNodes", "Number of nodes", numNodes);
   cmd.AddValue ("txPower", "Transmitted Power", txPower);
   cmd.AddValue ("routing", "Routing Algorithm", routing);
@@ -77,8 +75,6 @@ main (int argc, char *argv[])
 
   Config::SetDefault ("ns3::OnOffApplication::PacketSize", 
                       UintegerValue (pktSize));
-  Config::SetDefault ("ns3::OnOffApplication::DataRate", 
-                      StringValue (appDataRate));
 
   NodeContainer wifiStaNodes;
   wifiStaNodes.Create (nWifi);
