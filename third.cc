@@ -81,8 +81,8 @@ main (int argc, char *argv[])
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
-  phy.Set("TxPowerStart", DoubleValue(10.0*log10(txPower*1000000))); // Convert mW to dbm
-  phy.Set("TxPowerEnd", DoubleValue(10.0*log10(txPower*1000000)));   // Convert mW to dbm
+  phy.Set("TxPowerStart", DoubleValue(10.0*log10(txPower))); // Convert mW to dbm
+  phy.Set("TxPowerEnd", DoubleValue(10.0*log10(txPower)));   // Convert mW to dbm
   phy.SetChannel (channel.Create ());
 
   WifiHelper wifi = WifiHelper::Default ();
