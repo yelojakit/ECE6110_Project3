@@ -137,8 +137,9 @@ main (int argc, char *argv[])
         bit2.erase(bit2.begin());
       }
       char msg[50] = "";
-      sprintf( msg , "%u: sends to %u" , i , bit2[0] );
+      sprintf( msg , "%u sends to %u" , i , bit2[0] );
       NS_LOG_INFO (msg);
+      cout << adhocInterfaces.GetAddress (i) << "\t" << adhocInterfaces.GetAddress (bit2[0]) << endl;
       AddressValue remoteAddress (InetSocketAddress (adhocInterfaces.GetAddress (bit2[0]), port));
       UDPclientHelper.SetAttribute ("Remote", remoteAddress);
       UDPclientApps.Add (UDPclientHelper.Install (wifiAdhocNodes.Get (i)));
@@ -159,19 +160,16 @@ main (int argc, char *argv[])
   sinkUDPApps.Start (Seconds (0.0));
   sinkUDPApps.Stop (Seconds (10.0));
 
+  // Install FlowMonitor on all nodes
+  FlowMonitorHelper flowmon;
+  Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
+
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Stop (Seconds (10.0));
 
   // Create the animation object and configure for specified output
-  AnimationInterface anim (animFile);
-  // Install FlowMonitor on all nodes
-  FlowMonitorHelper flowmon;
-  Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
-
-  for( size_t i = 0 ; i < nWifi ; ++i ){
-    cout << destinations[i] << endl;
-  }
+  // AnimationInterface anim (animFile);
 
   monitor->SerializeToXmlFile("xmlfile.xml",false,false);
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
@@ -180,14 +178,14 @@ main (int argc, char *argv[])
   uint32_t totalTx = 0;
   for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
+      cout << "In for loop" << endl;
       Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(i->first);
-      for( size_t j = 0 ; j < nWifi ; ++j ){
-        if ((t.sourceAddress == adhocInterfaces.GetAddress(j)) && (t.destinationAddress == adhocInterfaces.GetAddress(destinations[j]))){
+      cout << t.destinationAddress << "\t" << adhocInterfaces.GetAddress(destinations[(t.sourceAddress.Get()&0xff)-1]) << endl;
+      if (t.destinationAddress == adhocInterfaces.GetAddress(destinations[(t.sourceAddress.Get()&0xff)-1])){
           totalTx += i->second.txBytes;
           totalRx += i->second.rxBytes;
           cout << "in here" << endl;
-        }
-      }
+      }    
     }
   
   cout << totalTx << "\t" << totalRx << endl;
