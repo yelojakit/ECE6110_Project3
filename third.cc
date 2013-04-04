@@ -170,7 +170,7 @@ main (int argc, char *argv[])
   AnimationInterface anim (animFile);
 
   Simulator::Run ();
-  monitor->SerializeToXmlFile("xmlfile.xml",false,false);
+  // monitor->SerializeToXmlFile("xmlfile.xml",false,false);
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
   std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
   uint32_t totalRx = 0;
@@ -185,7 +185,7 @@ main (int argc, char *argv[])
     }
   
   if( totalTx > 0 ){
-    printf("MyOutput\t%d\t%s\t%s\t%f\n",txPower,appDataRate.c_str(),routing.c_str(),(float) totalRx/(float) totalTx);
+    printf("MyOutput\t%d\t%d\t%s\t%s\t%f\n",nWifi,txPower,appDataRate.c_str(),routing.c_str(),(float) totalRx/(float) totalTx);
   } else {
     cout << "ERROR: totalTx = 0" << endl;
   }
