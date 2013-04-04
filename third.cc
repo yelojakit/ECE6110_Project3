@@ -46,7 +46,7 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Creating Topology");
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
-  uint32_t      nWifi = 3;
+  uint32_t      nWifi = 10;
   std::string appDataRate = "1024kb/s";
   double   	txPower = 500; //In terms of mW
   std::string   routing = "AODV";
@@ -94,8 +94,8 @@ main (int argc, char *argv[])
   MobilityHelper mobility;
 
   mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
-                                 "X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"),
-                                 "Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
+                                 "X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=10.0]"),
+                                 "Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=10.0]"));
 
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -136,10 +136,6 @@ main (int argc, char *argv[])
         bit2.push_back(i);
         bit2.erase(bit2.begin());
       }
-      char msg[50] = "";
-      sprintf( msg , "%u sends to %u" , i , bit2[0] );
-      NS_LOG_INFO (msg);
-      cout << adhocInterfaces.GetAddress (i) << "\t" << adhocInterfaces.GetAddress (bit2[0]) << endl;
       AddressValue remoteAddress (InetSocketAddress (adhocInterfaces.GetAddress (bit2[0]), port));
       UDPclientHelper.SetAttribute ("Remote", remoteAddress);
       UDPclientApps.Add (UDPclientHelper.Install (wifiAdhocNodes.Get (i)));
@@ -169,8 +165,12 @@ main (int argc, char *argv[])
   Simulator::Stop (Seconds (10.0));
 
   // Create the animation object and configure for specified output
-  // AnimationInterface anim (animFile);
+  AnimationInterface anim (animFile);
 
+ std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
+    NS_LOG_INFO ("Done.");
+
+  Simulator::Run ();
   monitor->SerializeToXmlFile("xmlfile.xml",false,false);
   Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
   std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
@@ -178,23 +178,16 @@ main (int argc, char *argv[])
   uint32_t totalTx = 0;
   for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
-      cout << "In for loop" << endl;
       Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(i->first);
-      cout << t.destinationAddress << "\t" << adhocInterfaces.GetAddress(destinations[(t.sourceAddress.Get()&0xff)-1]) << endl;
       if (t.destinationAddress == adhocInterfaces.GetAddress(destinations[(t.sourceAddress.Get()&0xff)-1])){
           totalTx += i->second.txBytes;
           totalRx += i->second.rxBytes;
-          cout << "in here" << endl;
       }    
     }
   
   cout << totalTx << "\t" << totalRx << endl;
-  cout << "Efficiency = " << totalRx/totalTx << endl;
+  cout << "Efficiency = " << (float) totalRx/(float) totalTx << endl;
   
- std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
-    NS_LOG_INFO ("Done.");
-
-  Simulator::Run ();
   Simulator::Destroy ();
   return 0;
 }
