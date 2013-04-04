@@ -164,13 +164,10 @@ main (int argc, char *argv[])
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Run Simulation.");
-  Simulator::Stop (Seconds (10.0));
+  Simulator::Stop (Seconds (15.0));
 
   // Create the animation object and configure for specified output
   AnimationInterface anim (animFile);
-
- std::cout << "Animation Trace file created:" << animFile.c_str ()<< std::endl;
-    NS_LOG_INFO ("Done.");
 
   Simulator::Run ();
   monitor->SerializeToXmlFile("xmlfile.xml",false,false);
@@ -193,6 +190,7 @@ main (int argc, char *argv[])
     cout << "ERROR: totalTx = 0" << endl;
   }
   
+  NS_LOG_INFO ("Done.");
   Simulator::Destroy ();
   return 0;
 }
