@@ -47,8 +47,8 @@ main (int argc, char *argv[])
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
   uint32_t      nWifi = 10;
-  std::string appDataRate = "1024kb/s";
-  double   	txPower = 500; //In terms of mW
+  std::string appDataRate = "2048kb/s";
+  uint32_t   	txPower = 500; //In terms of mW
   std::string   routing = "AODV";
 
   CommandLine cmd;
@@ -78,13 +78,15 @@ main (int argc, char *argv[])
   
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default ();
   YansWifiPhyHelper phy = YansWifiPhyHelper::Default ();
-  phy.Set("TxPowerStart", DoubleValue(10.0*log10(txPower)));
-  phy.Set("TxPowerEnd", DoubleValue(10.0*log10(txPower)));  
+  phy.Set("TxPowerStart", DoubleValue(10.0*log10(txPower*1000000))); // Convert mW to dbm
+  phy.Set("TxPowerEnd", DoubleValue(10.0*log10(txPower*1000000)));   // Convert mW to dbm
   phy.SetChannel (channel.Create ());
 
   WifiHelper wifi = WifiHelper::Default ();
+  wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager", 
-                                "DataMode", StringValue ("OfdmRate6Mbps")); 
+                                "DataMode", StringValue ("DsssRate11Mbps"),
+                                "ControlMode",StringValue ("DsssRate11Mbps")); 
 
   NqosWifiMacHelper wifiMac = NqosWifiMacHelper::Default ();
   
@@ -94,8 +96,8 @@ main (int argc, char *argv[])
   MobilityHelper mobility;
 
   mobility.SetPositionAllocator ("ns3::RandomRectanglePositionAllocator",
-                                 "X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=10.0]"),
-                                 "Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=10.0]"));
+                                 "X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"),
+                                 "Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1000.0]"));
 
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -185,8 +187,11 @@ main (int argc, char *argv[])
       }    
     }
   
-  cout << totalTx << "\t" << totalRx << endl;
-  cout << "Efficiency = " << (float) totalRx/(float) totalTx << endl;
+  if( totalTx > 0 ){
+    printf("MyOutput\t%d\t%s\t%s\t%f\n",txPower,appDataRate.c_str(),routing.c_str(),(float) totalRx/(float) totalTx);
+  } else {
+    cout << "ERROR: totalTx = 0" << endl;
+  }
   
   Simulator::Destroy ();
   return 0;
