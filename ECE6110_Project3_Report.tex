@@ -352,11 +352,11 @@
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Jack Suen, Sriram Balasubramaniam, Pratibha Rawat, Satya Bhattacharya}
+\author{\IEEEauthorblockN{Jack Suen, Sriram Balasubramaniam, Pratibha Rawan, Satya Bhattacharya}
 \IEEEauthorblockA{School of Electrical and\\Computer Engineering\\
 Georgia Institute of Technology\\
 Atlanta, Georgia 30332--0250\\
-Email: jsuen3@mail.gatech.edu}}
+Email: jsuen3@mail.gatech.edu ; sriram227@gatech.edu\\}}
 
 % conference papers do not typically use \thanks and this command
 % is locked out in conference mode. If really needed, such as for
@@ -372,7 +372,7 @@ Email: jsuen3@mail.gatech.edu}}
 
 \begin{abstract}
 %\boldmath
-This paper analyzes the results of 
+This paper simulates a wirless ad-hoc network using NS-3 and being run on two different routing protocols. The simulation is done varying parameters like transmission power, traffic intensity and number of nodes. The routing protocols used are Ad-hoc On-Demand Distance Vector Routing(AODV) and Optimized Link State Routing(OLSR).  
 
 
 \end{abstract}
@@ -399,15 +399,11 @@ This paper analyzes the results of
 
 \section{Introduction}
 % no \IEEEPARstart
-The main purpose of this paper is to learn the ns-3 simulations in wireless ad-hoc networks. In this project, 
-we use two wireless routing protocols AODV and OLSR along with different variables like the node density (average
-numberof nodes per unit area), transmission power of each node and the traffic intensity (the total data demand on 
-the network divided by the theoretical maximum possible data transmission rate). Thus, we measure data throughput of the 
-wireless ad-hoc network by varying the above variables.
-
+The main purpose of this paper is to learn the ns-3 simulations in wireless ad-hoc networks. In this project, we use two wireless routing protocols AODV and OLSR along with different variables like the node density (average numberof nodes per unit area), transmission power of each node and the traffic intensity (the total data demand on the network divided by the theoretical maximum possible data transmission rate). Thus, we measure data throughput of the wireless ad-hoc network by varying the above variables. 
 
 \section{Configuration}
-Our model consists of a wireless LAN of square are 
+
+\subsection{Topology}
 
 \subsection{UDP to TCP Ratio}
 
@@ -418,6 +414,8 @@ Our model consists of a wireless LAN of square are
 \section{RED Parameters}
 
 \subsection{Minimum Threshold}
+
+\section{Traffic Intensity}
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.
 % For figures, \caption should occur after the \includegraphics.
