@@ -46,15 +46,15 @@ main (int argc, char *argv[])
   NS_LOG_INFO ("Creating Topology");
   std::string animFile = "AnimTrace.xml" ;  // Name of file for animation output
   bool verbose = true;
-  uint32_t      nWifi = 10;
-  std::string appDataRate = "2048kb/s";
+  uint32_t      nWifi = 25;
+  float trafficIntensityPct = .5;
   uint32_t   	txPower = 500; //In terms of mW
   std::string   routing = "AODV";
 
   CommandLine cmd;
   cmd.AddValue ("nWifi", "Number of wifi STA devices", nWifi);
   cmd.AddValue ("verbose", "Tell echo applications to log if true", verbose);
-  cmd.AddValue ("appDataRate", "Set OnOff App DataRate", appDataRate);
+  cmd.AddValue ("trafficIntensityPct", "Set trafficIntensity", trafficIntensityPct);
   cmd.AddValue ("txPower", "Transmitted Power", txPower);
   cmd.AddValue ("routing", "Routing Algorithm", routing);
   cmd.Parse (argc,argv);
@@ -69,9 +69,12 @@ main (int argc, char *argv[])
     {
       NS_ABORT_MSG ("Invalid routing algorithm: Use --routing=AODV or --routing=OLSR");
     }
-
+  
+  float rate = 11*1024*trafficIntensityPct/nWifi;
+  char appDataRate[16];
+  sprintf( appDataRate , "%dkbps" , (int) (rate) );
   Config::SetDefault ("ns3::OnOffApplication::DataRate", 
-                      StringValue (appDataRate));
+                      StringValue(appDataRate));
 
   NodeContainer wifiAdhocNodes;
   wifiAdhocNodes.Create (nWifi);
@@ -158,10 +161,6 @@ main (int argc, char *argv[])
   sinkUDPApps.Start (Seconds (0.0));
   sinkUDPApps.Stop (Seconds (10.0));
 
-  // Install FlowMonitor on all nodes
-  FlowMonitorHelper flowmon;
-  Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
-
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   NS_LOG_INFO ("Run Simulation.");
   Simulator::Stop (Seconds (15.0));
@@ -170,22 +169,23 @@ main (int argc, char *argv[])
   AnimationInterface anim (animFile);
 
   Simulator::Run ();
-  // monitor->SerializeToXmlFile("xmlfile.xml",false,false);
-  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
-  std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
-  uint32_t totalRx = 0;
-  uint32_t totalTx = 0;
-  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
+  uint64_t totalRx = 0;
+  uint64_t totalTx = 0;
+  for (uint32_t i = 0; i < sinkUDPApps.GetN (); i++)
     {
-      Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(i->first);
-      if (t.destinationAddress == adhocInterfaces.GetAddress(destinations[(t.sourceAddress.Get()&0xff)-1])){
-          totalTx += i->second.txBytes;
-          totalRx += i->second.rxBytes;
-      }    
+      Ptr <Application> app = sinkUDPApps.Get (i);
+      Ptr <PacketSink> pktSink = DynamicCast <PacketSink> (app);
+      totalRx += pktSink->GetTotalRx ();
+    }
+  for (uint32_t i = 0; i < UDPclientApps.GetN (); i++)
+    {
+      Ptr <Application> app = UDPclientApps.Get (i);
+      Ptr <OnOffApplication> onOffApp = DynamicCast <OnOffApplication> (app);
+      totalTx += onOffApp->m_totBytes;
     }
   
   if( totalTx > 0 ){
-    printf("MyOutput\t%d\t%d\t%s\t%s\t%f\n",nWifi,txPower,appDataRate.c_str(),routing.c_str(),(float) totalRx/(float) totalTx);
+    printf("MyOutput\t%d\t%d\t%f\t%s\t%f\n",nWifi,txPower,trafficIntensityPct,routing.c_str(),(float) totalRx/(float) totalTx);
   } else {
     cout << "ERROR: totalTx = 0" << endl;
   }
