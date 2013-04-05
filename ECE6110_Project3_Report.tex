@@ -352,7 +352,7 @@
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Jack Suen, Sriram Balasubramaniam, Pratibha Rawan, Satya Bhattacharya}
+\author{\IEEEauthorblockN{Jack Suen, Sriram Balasubramaniam, Pratibha Rawat, Satya Bhattacharya}
 \IEEEauthorblockA{School of Electrical and\\Computer Engineering\\
 Georgia Institute of Technology\\
 Atlanta, Georgia 30332--0250\\
@@ -416,6 +416,17 @@ The main purpose of this paper is to learn the ns-3 simulations in wireless ad-h
 \subsection{Minimum Threshold}
 
 \section{Traffic Intensity}
+% no \IEEEPARstart
+From the graph, we can see fluctuation in the output of AODV. The main reason behind this is AODV being a reactive protocol.
+Since its a reactive protocol, there is a latency associated with it due to route computation. Therefore, as you can see as the
+number of nodes increases, we see the increase in throughput and later a decrease and it goes on. This happens as the throughput
+increases, the nodes keep sending packets and soon reach the network capacity. As the capacity is reached, we experience loss.
+After loss has occured, there will be latency again due to many reasons like the nodes would now need to compute the route again
+thus increasing latency. Since in AODV, we only know about our neighbouring nodes. So if connection breaks, severe impact is made
+on all the nodes associated with the disconnected node. However, OLSR being a proactive protocol has all the links connected due to
+the link state flooding concept. This enables a continous connected state and thus improves the throughput efficiency. This might
+be the reason for less fluctuating OLSR throughput.
+
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.
 % For figures, \caption should occur after the \includegraphics.
