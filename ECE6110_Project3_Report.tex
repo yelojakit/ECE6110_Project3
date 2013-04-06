@@ -95,11 +95,6 @@
 % When switching from latex to pdflatex and vice-versa, the compiler may
 % have to be run twice to clear warning/error messages.
 
-
-
-
-
-
 % *** CITATION PACKAGES ***
 %
 %\usepackage{cite}
@@ -117,11 +112,6 @@
 % The latest version can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/contrib/cite/
 % The documentation is contained in the cite.sty file itself.
-
-
-
-
-
 
 % *** GRAPHICS RELATED PACKAGES ***
 %
@@ -346,17 +336,18 @@
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{ECE6110 Project 1 Report}
+\title{ECE6110 Project 3 Report}
 
 
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Jack Suen, Sriram Balasubramaniam, Pratibha Rawat, Satya Bhattacharya}
+\author{\IEEEauthorblockN{Jack Suen, Sriram Balasubramaniam, \\
+Pratibha Rawat, Satya Bhattacharya}
 \IEEEauthorblockA{School of Electrical and\\Computer Engineering\\
 Georgia Institute of Technology\\
 Atlanta, Georgia 30332--0250\\
-Email: jsuen3@mail.gatech.edu ; sriram227@gatech.edu ; prawat3@gatech.edu\\}}
+Email: \{jsuen3,sriram227,prawat3,sbhattacharya7\}@mail.gatech.edu\\}}
 
 % conference papers do not typically use \thanks and this command
 % is locked out in conference mode. If really needed, such as for
@@ -372,9 +363,7 @@ Email: jsuen3@mail.gatech.edu ; sriram227@gatech.edu ; prawat3@gatech.edu\\}}
 
 \begin{abstract}
 %\boldmath
-This paper simulates a wirless ad-hoc network using NS-3 and being run on two different routing protocols. The simulation is done varying parameters like transmission power, traffic intensity and number of nodes. The routing protocols used are Ad-hoc On-Demand Distance Vector Routing(AODV) and Optimized Link State Routing(OLSR).  
-
-
+This paper simulates a wireless ad-hoc network using NS-3 and being run on two different routing protocols. The simulation is done varying parameters like transmission power, traffic intensity and number of nodes. The routing protocols used are Ad-hoc On-Demand Distance Vector Routing (AODV) and Optimized Link State Routing (OLSR).  
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -399,33 +388,53 @@ This paper simulates a wirless ad-hoc network using NS-3 and being run on two di
 
 \section{Introduction}
 % no \IEEEPARstart
-The main purpose of this paper is to learn the ns-3 simulations in wireless ad-hoc networks. In this project, we use two wireless routing protocols AODV and OLSR along with different variables like the node density (average numberof nodes per unit area), transmission power of each node and the traffic intensity (the total data demand on the network divided by the theoretical maximum possible data transmission rate). Thus, we measure data throughput of the wireless ad-hoc network by varying the above variables. 
+The main purpose of this paper is to learn the ns-3 simulations in wireless ad-hoc networks. In this project, we use two wireless routing protocols AODV and OLSR along with different variables like the node density (average number of nodes per unit area), transmission power of each node and the traffic intensity (the total data demand on the network divided by the theoretical maximum possible data transmission rate). Thus, we measure data throughput of the wireless ad-hoc network by varying the above variables. 
 
-\section{Configuration}
+\section{Configuration and Topology}
+The configuration of this experiment is to simulate a wireless ad-hoc network under the mentioned variables. The wireless LAN will be constricted to a 1000m by 1000m square area with nodes randomly placed. Mobility will not be considered as it not only adds complexity but adds a certain amount of randomness to the wireless throughput. The defaults when the variable is not changed are as follows: there will be 25 nodes in the square kilometer, the default transmitting power is at 500mW, default routing protocol is AODV, and a default traffic intensity of 50\%. Note that each of these variables remain the same for every node every send per run.
 
-\subsection{Topology}
-
-\subsection{UDP to TCP Ratio}
-
-\section{Queue Sizes}
-
-\section{TCP Receiver Windows}
-
-\section{RED Parameters}
-
-\subsection{Minimum Threshold}
+\section{Below 100\% Efficiency}
+In the following analyses and figures, none of the results get close to 100\% efficiency. This is due to the fact that the node density is 25 nodes per square kilometer. On average this means that there is one node every 200m by 200m. If this were evenly spaced out this results in a distance of 400m between 2 nodes. This distance is too far for efficient transmission. This default value of 25 nodes is chosen on purpose so that changes among the efficiency can be detected. If it were too close to full efficiency, any additional enhancements would not be detected. In addition, the addition of nodes greatly affected the simulation time due to the increase in flows.
 
 \section{Traffic Intensity}
 % no \IEEEPARstart
-From the graph, we can see fluctuation in the output of AODV. The main reason behind this is AODV being a reactive protocol.
-Since its a reactive protocol, there is a latency associated with it due to route computation. Therefore, as you can see as the
-number of nodes increases, we see the increase in throughput and later a decrease and it goes on. This happens as the throughput
-increases, the nodes keep sending packets and soon reach the network capacity. As the capacity is reached, we experience loss.
-After loss has occured, there will be latency again due to many reasons like the nodes would now need to compute the route again
-thus increasing latency. Since in AODV, we only know about our neighbouring nodes. So if connection breaks, severe impact is made
-on all the nodes associated with the disconnected node. However, OLSR being a proactive protocol has all the links connected due to
-the link state flooding concept. This enables a continous connected state and thus improves the throughput efficiency. This might
-be the reason for less fluctuating OLSR throughput.
+From Figure \ref{fig_tIntensity}, we can see fluctuation in the output of AODV. The main reason behind this is AODV being a reactive protocol. Since its a reactive protocol, there is a latency associated with it due to route computation. Therefore, as you can see as the number of nodes increases, we see the increase in throughput and later a decrease and it goes on. This happens as the throughput increases, the nodes keep sending packets and soon reach the network capacity. As the capacity is reached, we experience loss. After loss has occurred, there will be latency again due to many reasons like the nodes would now need to compute the route again thus increasing latency. Since in AODV, we only know about our neighboring nodes. So if connection breaks, severe impact is made on all the nodes associated with the disconnected node. However, OLSR being a proactive protocol has all the links connected due to the link state flooding concept. This enables a continuous connected state and thus improves the throughput efficiency. This might be the reason for less fluctuating OLSR throughput.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=2.7in]{trafficIntensity.png}
+\caption{Simulation results of traffic intensity on the efficiency of the network}
+\label{fig_tIntensity}
+\end{figure}
+
+\section{Transmission Power}
+Transmission power affects the efficiency of the network because the lack of power will cause packets to drop if the destination is too far or no nodes are near enough to forward it. Conversely and theoretically, a strong power will offer consistent and reliable speeds. Figure \ref{fig_txPower} shows this trend to be true. However, the figure also shows that the growth is not linear and in fact, seems to behave in a more stepwise manner.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=2.7in]{transmissionPower.png}
+\caption{Simulation results of transmission power on the efficiency of the network}
+\label{fig_txPower}
+\end{figure}
+
+\subsection{Difference between AODV and OLSR}
+There were minimal differences in AODV and OLSR. In fact, in most of the points on Figure \ref{fig_txPower}, the differences are not even differentiable. At higher node densities, differences may be more discernible.
+
+\section{Number of Nodes}
+The number of nodes changes the density of the network. Too sparse of a network density causes low efficiency in such a large network since most nodes will not be able to send a signal to each other, which also reduces it's forwarding ability. Too dense of a network will cause more collisions and low efficiency as well. Figure \ref{fig_numNodes} shows this a bit, showing peak efficiency at approximately 50 nodes. Despite going up to 500 nodes, the density is still a bit low because of the large area.
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=2.7in]{numberNodes.png}
+\caption{Simulation results of transmission power on the efficiency of the network}
+\label{fig_numNodes}
+\end{figure}
+
+\subsection{Below 100\% Revisited}
+Recall that the beginning of the paper noted that efficiencies were low because of the low density. However, Figure \ref{fig_numNodes} clearly does not show this. This can be explained due to the fact that diminishing returns were reached due to the overflow of nodes sending packets. Increasing densities can be done in two different manners, to increase the number of nodes as above or simply reduce the area. To achieve higher efficiency, balance should be exercised. In this case, reducing the area drastically increases performance.
+
+\subsection{Difference between AODV and OLSR}
+There are notable differences in efficiency when using different routing protocols. Most notably, OLSR performs better than AODV in all but the lower density cases by similar margins. This makes sense as AODV needs other nodes to query new nodes it cannot get to, whereas OLSR does not need to do this.
 
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.
@@ -509,7 +518,7 @@ be the reason for less fluctuating OLSR throughput.
 % command of the stfloats package.
 
 \section{Conclusion}
-This simulation and experiment shows that
+This simulation and experiment shows that wireless network throughput varies greatly depending on a number of conditions. Any one of these variables can have a significant effect on the efficiency. Unlike other cases, where optimizing the other variables can recover the performance slightly, wireless ad-hoc networks have bottleneck limits on variables. For example, a very low transmission power will gain very low efficiency even if node density is very high (unless node density exceeds practical limits). Another key fact noticed is the importance of node density and how it should not be changed simply by increasing the number of nodes. Rather the area of the network should be decreased.
 
 % conference papers do not normally have an appendix
 
